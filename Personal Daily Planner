@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Daily Planner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>My Daily Planner</h1>
+    <div class="planner">
+        <div class="date-selector">
+            <input type="date" id="date-picker">
+        </div>
+        <div class="task-input">
+            <input type="text" id="task-input" placeholder="Add a new task...">
+            <button id="add-task">Add Task</button>
+        </div>
+        <ul id="task-list"></ul>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f4f4f4;
+}
+h1 {
+    text-align: center;
+}
+.planner {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.date-selector, .task-input {
+    margin-bottom: 20px;
+}
+input[type="date"], input[type="text"] {
+    width: calc(100% - 100px);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+button {
+    padding: 10px 20px;
+    background: #4ecdc4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#task-list {
+    list-style: none;
+    padding: 0;
+}
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+.task-item.completed {
+    text-decoration: line-through;
+    color: #888;
+}
+.task-actions button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+@media (max-width: 768px) {
+    .task-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+const taskInput = document.getElementById('task-input');
+const addTaskBtn = document.getElementById('add-task');
+const taskList = document.getElementById('task-list');
+const datePicker = document.getElementById('date-picker');
+
+let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
+
+datePicker.valueAsDate = new Date();
+loadTasks();
+
+addTaskBtn.addEventListener('click', () => {
+    const taskText = taskInput.value.trim();
+    const selectedDate = datePicker.value;
+    if (taskText && selectedDate) {
+        if (!tasks[selectedDate]) tasks[selectedDate] = [];
+        tasks[selectedDate].push({ text: taskText, completed: false });
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        taskInput.value = '';
+        loadTasks();
+    }
+});
+
+function loadTasks() {
+    const selectedDate = datePicker.value;
+    taskList.innerHTML = '';
+    if (tasks[selectedDate]) {
+        tasks[selectedDate].forEach((task, index) => {
+            const li = document.createElement('li');
+            li.className = 'task-item' + (task.completed ? ' completed' : '');
+            li.innerHTML = `
+                <span>${task.text}</span>
+                <div class="task-actions">
+                    <button onclick="toggleComplete('${selectedDate}', ${index})">${task.completed ? 'Undo' : 'Complete'}</button>
+                    <button onclick="deleteTask('${selectedDate}', ${index})">Delete</button>
+                </div>
+            `;
+            taskList.appendChild(li);
+        });
+    }
+}
+
+function toggleComplete(date, index) {
+    tasks[date][index].completed = !tasks[date][index].completed;
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    loadTasks();
+}
+
+function deleteTask(date, index) {
+    tasks[date].splice(index, 1);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    loadTasks();
+}
+
+datePicker.addEventListener('change', loadTasks);
